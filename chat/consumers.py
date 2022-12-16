@@ -18,34 +18,44 @@ def consumer_authenticator(user=None, project_uuid=None, project_user=None, chat
             if chat is None:
                 res = False
             else:    
-                res = chat.members.filter(pk=project_user).exists()
+                p_user = chat.members.filter(pk=project_user).last()
+                if p_user is None:
+                    res = False
+                else:
+                    res = True
+                    project_user = p_user
+                    
     else:
         res = False
-    return res
+    return project_user ,res
     
 
 class ChatConsumer(AsyncJsonWebsocketConsumer):
 
     async def connect(self):
-        self.chat_id = self.scope['url_route']['kwargs']['id']
-        self.user = self.scope['user']
-        self.qs = parse_qs(self.scope['query_string'].decode())
-        self.project = self.qs.get('project', [None])[0]
-        self.project_user = self.qs.get('project_user', [None])[0]
-        self.group_name = f"chat{self.chat_id}"
-        auth = await consumer_authenticator(chat_id=self.chat_id, user=self.user, project_uuid=self.project, project_user=self.project_user)
-        if auth:
-            await self.channel_layer.group_add(self.group_name, self.channel_name)
-            # async_to_sync(self.channel_layer.group_add)(
-            #     self.group_name,
-            #     self.channel_name
-            # )
-            self.project_user  = await ProjectUser.objects.aget(pk=self.project_user)
-            print("connected")
-            await self.accept()
-            self.project_user.is_online = True
-            async_to_sync(self.user.save)
-        else:
+        try:
+            self.chat_id = self.scope['url_route']['kwargs']['id']
+            self.user = self.scope['user']
+            self.qs = parse_qs(self.scope['query_string'].decode())
+            self.project = self.qs.get('project', [None])[0]
+            self.project_user = self.qs.get('project_user', [None])[0]
+            self.group_name = f"chat{self.chat_id}"
+            self.project_user ,auth = await consumer_authenticator(chat_id=self.chat_id, user=self.user, project_uuid=self.project, project_user=self.project_user)
+            if auth:
+                await self.channel_layer.group_add(self.group_name, self.channel_name)
+                # async_to_sync(self.channel_layer.group_add)(
+                #     self.group_name,
+                #     self.channel_name
+                # )
+                print("connected")
+                self.project_user.is_online = True
+                async_to_sync(self.user.save)
+                self.chat = await Chat.objects.aget(pk=self.chat_id)
+                await self.accept()
+            else:
+                await self.disconnect()
+        except Exception as e:
+            print("error happend", e)
             await self.disconnect()
             
         # if self.chat is not None and self.user.is_authenticated:
@@ -65,9 +75,10 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
     async def disconnect(self, close_code=1):
         # Leave room group
         print('disconnected')
-        if self.project_user.is_online:  
-            self.user.is_online = False
-            async_to_sync(self.user.save)
+        if isinstance(self.project_user, ProjectUser):
+            if self.project_user.is_online:  
+                self.project_user.is_online = False
+                async_to_sync(self.project_user.save)
 
         # async_to_sync(self.channel_layer.group_discard)(
         #     self.group_name,
@@ -87,7 +98,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
     async def fetch_messages(self, data):
         content = {
             'command': 'messages',
-            'messages': self.chat.messages_to_json()
+            'messages': await sync_to_async(self.chat.messages_to_json)()
         }
         # BroadCast that message
         await self.send_message(content)
@@ -98,9 +109,9 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
     async def new_message(self, data):
         # gets the new message creates a model from it and sends it to bradcast
         message = await Message.objects.acreate(
-            user=self.user,
+            user=self.project_user,
             text=data['message'],
-            chat=self.chat)
+            chat_id=self.chat_id)
         content = {
             'command': 'new_message',
             'message': message.message_tojson()
@@ -130,7 +141,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
     async def is_typing(self, event):
         content = {
             'command': 'is_typing',
-            'user_id': self.user.id,
+            'user_id': self.project_user.id,
             'message': event["is_typing"]
         }
         print(content['message'], type(content['message']))
