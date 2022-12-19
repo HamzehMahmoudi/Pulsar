@@ -24,9 +24,10 @@ class Message(BaseModel):
 
 
 class Chat(BaseModel):
-    members = models.ManyToManyField("accounts.ProjectUser", verbose_name=_("members"))
+    members = models.ManyToManyField("accounts.ProjectUser", verbose_name=_("members"), related_name='chats')
     chat_type = models.CharField(_("chat type"), max_length=20, choices=ChatTypes.choices, default=ChatTypes.PV)
     project =  models.ForeignKey("accounts.Project", verbose_name=_("project"), on_delete=models.CASCADE, related_name="chats")
+    name = models.CharField(max_length=256 ,null=True, blank=True, default=None)
 
     def messages_to_json(self, num=10):
         res = []
