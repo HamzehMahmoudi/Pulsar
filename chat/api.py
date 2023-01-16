@@ -27,4 +27,4 @@ class ChatsAPI(ListAPIView):
                     return self.get_paginated_response(serializer.data)
                 serializer = self.get_serializer(chats, many=True)
                 return Response(data=serializer.data)
-        return Response(status=status.HTTP_400_BAD_REQUEST)        
+        return Response(status=status.HTTP_400_BAD_REQUEST)

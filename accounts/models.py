@@ -5,8 +5,8 @@ from accounts.manager import CustomUserManager
 from django.utils import timezone
 from accounts.enums import UserType
 from pulsar.models import BaseModel
-# import binascii
-# import os
+import binascii
+import os
 # Create your models here.
 
 
@@ -37,28 +37,24 @@ class Project(BaseModel):
     
 class ProjectUser(BaseModel):
     project = models.ForeignKey("accounts.Project", on_delete=models.CASCADE, related_name='users')
+    identifier = models.CharField(max_length=255, verbose_name=_('identifier'))
     is_online = models.BooleanField(default=False)
 
+def generate_key():
+    return binascii.hexlify(os.urandom(20)).decode()
 
-# class AppToken(models.Model):
-#     name = models.CharField(max_length=256, null=True, blank=True)
-#     key = models.CharField(max_length=256, primary_key=True)
-#     project = models.ForeignKey('accounts.Project', on_delete=models.CASCADE, db_index=True)
-#     created = models.DateTimeField(auto_now_add=True)
-#     expire_on = models.DateTimeField(blank=True, null=True,)
+class AppToken(models.Model):
+    name = models.CharField(max_length=256, null=True, blank=True)
+    key = models.CharField(max_length=256, default=generate_key, blank=True, null=True)
+    project = models.ForeignKey('accounts.Project', on_delete=models.CASCADE, db_index=True)
+    created = models.DateTimeField(auto_now_add=True)
+    expire_on = models.DateTimeField(blank=True, null=True,)
 
-#     class Meta:
-#         verbose_name = _("Token")
-#         verbose_name_plural = _("Tokens")
+    class Meta:
+        verbose_name = _("Token")
+        verbose_name_plural = _("Tokens")
 
-#     def save(self, *args, **kwargs):
-#         if not self.key:
-#             self.key = self.generate_key()
-#         s = super().save()
-#         return s
 
-#     def generate_key(self):
-#         return binascii.hexlify(os.urandom(20)).decode()
 
-#     def __str__(self):
-#         return self.name
+    def __str__(self):
+        return self.name

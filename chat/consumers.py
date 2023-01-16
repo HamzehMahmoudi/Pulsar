@@ -28,6 +28,16 @@ def consumer_authenticator(user=None, project_uuid=None, project_user=None, chat
     else:
         res = False
     return project_user ,res
+
+@sync_to_async
+def costumer_authenticator(project=None, project_user=None, chat_id=None):
+    chat = project.chats.filter(pk=chat_id).last()
+    chat_condition = False
+    if chat is not None:
+        chat_condition = chat.members.filter(pk=project_user.id).exists()
+        
+    project_condition = project_user.project_id == project.id
+    return project_condition and chat_condition
     
 
 class ChatConsumer(AsyncJsonWebsocketConsumer):
@@ -35,12 +45,11 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
     async def connect(self):
         try:
             self.chat_id = self.scope['url_route']['kwargs']['id']
-            self.user = self.scope['user']
-            self.qs = parse_qs(self.scope['query_string'].decode())
-            self.project = self.qs.get('project', [None])[0]
-            self.project_user = self.qs.get('project_user', [None])[0]
+            self.project = self.scope['project']
+            self.project_user = self.scope['project_user']
             self.group_name = f"chat{self.chat_id}"
-            self.project_user ,auth = await consumer_authenticator(chat_id=self.chat_id, user=self.user, project_uuid=self.project, project_user=self.project_user)
+            # self.project_user ,auth = await consumer_authenticator(chat_id=self.chat_id, user=self.user, project_uuid=self.project, project_user=self.project_user)
+            auth = await costumer_authenticator(project=self.project, project_user=self.project_user, chat_id=self.chat_id)
             if auth:
                 await self.channel_layer.group_add(self.group_name, self.channel_name)
                 # async_to_sync(self.channel_layer.group_add)(
@@ -49,7 +58,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                 # )
                 print("connected")
                 self.project_user.is_online = True
-                async_to_sync(self.user.save)
+                async_to_sync(self.project_user.save)
                 self.chat = await Chat.objects.aget(pk=self.chat_id)
                 await self.accept()
             else:
@@ -75,7 +84,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
     async def disconnect(self, close_code=1):
         # Leave room group
         print('disconnected')
-        if isinstance(self.project_user, ProjectUser):
+        if self.project_user is not None:
             if self.project_user.is_online:  
                 self.project_user.is_online = False
                 async_to_sync(self.project_user.save)

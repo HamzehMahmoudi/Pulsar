@@ -1,5 +1,5 @@
 from django.contrib import admin
-from accounts.models import User, Project, ProjectUser
+from accounts.models import User, Project, ProjectUser, AppToken
 # Register your models here.
 
 
@@ -10,4 +10,4 @@ class UserAdmin(admin.ModelAdmin):
     search_fields = ['username', 'email']
     exclude = ['password', 'groups', 'user_permissions']
 
-admin.site.register([Project, ProjectUser])
+admin.site.register([Project, ProjectUser, AppToken])
