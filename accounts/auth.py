@@ -28,11 +28,10 @@ class TokenAuthentication(BaseMiddleware):
         auth = headers.get('auth', None)
         p_uid = qs.get('uid', [None])[0]
         token = AppToken.objects.filter(key=auth).last()
-        now = timezone.now()
         scope['project'] = None
         scope['project_user'] = None
         if token is not None:
-            if token.expire_on >= now:
+            if token.is_valid():
                 project = token.project
                 scope['project'] = project
                 project_user = project.users.filter(identifier=p_uid).last()

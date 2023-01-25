@@ -31,10 +31,11 @@ def consumer_authenticator(user=None, project_uuid=None, project_user=None, chat
 
 @sync_to_async
 def costumer_authenticator(project=None, project_user=None, chat_id=None):
-    chat = project.chats.filter(pk=chat_id).last()
     chat_condition = False
-    if chat is not None:
-        chat_condition = chat.members.filter(pk=project_user.id).exists()
+    if project is not None:
+        chat = project.chats.filter(pk=chat_id).last()
+        if chat is not None:
+            chat_condition = chat.members.filter(pk=project_user.id).exists()
         
     project_condition = project_user.project_id == project.id
     return project_condition and chat_condition

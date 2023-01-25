@@ -5,8 +5,7 @@ from accounts.manager import CustomUserManager
 from django.utils import timezone
 from accounts.enums import UserType
 from pulsar.models import BaseModel
-import binascii
-import os
+from accounts.utils import generate_key
 # Create your models here.
 
 
@@ -40,20 +39,23 @@ class ProjectUser(BaseModel):
     identifier = models.CharField(max_length=255, verbose_name=_('identifier'))
     is_online = models.BooleanField(default=False)
 
-def generate_key():
-    return binascii.hexlify(os.urandom(20)).decode()
+
 
 class AppToken(models.Model):
     name = models.CharField(max_length=256, null=True, blank=True)
-    key = models.CharField(max_length=256, default=generate_key, blank=True, null=True)
+    key = models.CharField(max_length=256, default=generate_key, blank=True, null=True, unique=True)
     project = models.ForeignKey('accounts.Project', on_delete=models.CASCADE, db_index=True)
     created = models.DateTimeField(auto_now_add=True)
     expire_on = models.DateTimeField(blank=True, null=True,)
 
+    
     class Meta:
         verbose_name = _("Token")
         verbose_name_plural = _("Tokens")
 
+    def is_valid(self):
+        now = timezone.now()
+        return self.expire_on >= now
 
 
     def __str__(self):

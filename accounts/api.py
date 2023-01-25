@@ -13,8 +13,18 @@ class Dashboard(View):
     ...
     
 
-class GetProjects(View):
-    ...
+class ProjectsView(View):
+    def get(self, request):
+        user = request.user
+        res = []
+        projects = user.projects.all().values('id', 'name').iterator()
+        for p in projects:
+            p_data = {
+                "id": p['id'],
+                "name": p['name']
+            }
+            res.append(p_data)
+        return JsonResponse(data=res, safe=False)
     
 class ChatsAPI(APIView):
     permission_classes = [IsAuthenticated]
