@@ -1,9 +1,10 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 # from authentication.auth import CustomerAuthentication
+from accounts.forms import  UserRegisterForm
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.views.generic import TemplateView
-from django.http import HttpResponse, JsonResponse
+from django.shortcuts import redirect, render
 class Index(TemplateView):
     """
     this view show the index page 
@@ -18,6 +19,17 @@ class About(TemplateView):
 
 # class Dashboard(View):
 #     ...
+
+
+def register(request):
+    if request.method == "POST":
+        form = UserRegisterForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect("login")
+    else:
+        form = UserRegisterForm()
+    return render(request, "accounts/register.html", {"form": form})
     
 
 class ProjectsView(APIView):
