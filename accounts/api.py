@@ -2,16 +2,22 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 # from authentication.auth import CustomerAuthentication
 from rest_framework.permissions import AllowAny, IsAuthenticated
-from django.views import View
+from django.views.generic import TemplateView
 from django.http import HttpResponse, JsonResponse
-class Index(View):
-    permission_classes = [AllowAny]
+class Index(TemplateView):
+    """
+    this view show the index page 
+    """
+    template_name = 'accounts/index.html'
+    
+class About(TemplateView):
+    """
+    this view show the index page 
+    """
+    template_name = 'accounts/about.html'
 
-    def get(self, request):
-        return HttpResponse("<title>pulsar</title><h1> wellcome to pulsar :) </h1><br><p>there will be more content soon ... </p>")
-
-class Dashboard(View):
-    ...
+# class Dashboard(View):
+#     ...
     
 
 class ProjectsView(APIView):

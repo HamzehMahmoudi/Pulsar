@@ -1,0 +1,9 @@
+{% extends "accounts/base.html" %}
+{% load i18n %}
+{% block title %}{% trans "Logout" %}{% endblock %}
+{% block body %}
+<h3 class="display-3" style="padding-top:20%;text-align:center">{% trans "You logged out" %}</h3>
+<h3 style="text-align:center"> You can <a href="{% url 'login' %}"> Login </a> now </h3>
+
+
+{% endblock body %}
