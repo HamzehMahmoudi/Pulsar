@@ -13,12 +13,17 @@ class Message(BaseModel):
     message_file = models.FileField(_("file"), upload_to='messages/', max_length=100)
     replied_on = models.ForeignKey('chat.Message', on_delete=models.SET_NULL, related_name="replies", null=True, blank=True)
 
-    def message_tojson(self):
+    def message_tojson(self, host=None):
+        file_url = self.message_file.url if self.message_file else None
+        if host is not None and file_url is not None:
+            file_url = host + file_url
+            
         return {
             'id': self.id,
-            'user': self.user.id,
+            'user': self.user.identifier,
             'text': self.text,
             'replied_on': self.replied_on.id if self.replied_on else None,
+            'message_file': file_url,
             'created': self.created.isoformat()
         }
 
@@ -29,9 +34,15 @@ class Chat(BaseModel):
     project =  models.ForeignKey("accounts.Project", verbose_name=_("project"), on_delete=models.CASCADE, related_name="chats")
     name = models.CharField(max_length=256 ,null=True, blank=True, default=None)
 
-    def messages_to_json(self, num=10):
+    def messages_to_json(self, num=10, host=None):
         res = []
         for msg in self.messages.all()[:num].iterator():
-            j = msg.message_tojson()
+            file_url = self.message_file.url if self.message_file else None
+            if file_url is not None:
+                try:
+                    file_url = host + file_url
+                except:
+                    continue
+            j = msg.message_tojson(host=host)
             res.append(j)
         return res

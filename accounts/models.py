@@ -6,6 +6,8 @@ from django.utils import timezone
 from accounts.enums import UserType
 from pulsar.models import BaseModel
 from accounts.utils import generate_key
+from django.db.models import constraints
+from chat.enums import ChatTypes
 # Create your models here.
 
 
@@ -31,14 +33,40 @@ class User(AbstractBaseUser, PermissionsMixin):
 class Project(BaseModel):
     user = models.ForeignKey("accounts.User", on_delete=models.CASCADE, related_name='projects')
     name = models.CharField(max_length=50)
-    
+    class Meta:
+        constraints = [
+            constraints.UniqueConstraint(fields=['user', 'name'], name='unique_project'), 
+        ]    
     
     
 class ProjectUser(BaseModel):
     project = models.ForeignKey("accounts.Project", on_delete=models.CASCADE, related_name='users')
     identifier = models.CharField(max_length=255, verbose_name=_('identifier'))
     is_online = models.BooleanField(default=False)
+    
+    class Meta:
+        constraints = [
+            constraints.UniqueConstraint(fields=['project', 'identifier'], name='unique_project_user'),
+        ]
+    def get_chats(self):
+        return self.chats.all()
 
+    def get_pv_chats(self):
+        return self.chats.filter(chat_type=ChatTypes.PV)
+
+    def get_group_chats(self):
+        return self.chats.filter(chat_type=ChatTypes.GROUP)
+    
+def get_user_pv(self, user_id):
+    from chat.models import Chat
+    try:
+        user = ProjectUser.objects.get(id=user_id)
+        chat, created = Chat.objects.get_or_create(project=self.project, chat_type=ChatTypes.PV, project_user=user)
+        if created:
+            chat.members.add(self, user)
+        return chat
+    except ProjectUser.DoesNotExist:
+        return None
 
 
 class AppToken(models.Model):

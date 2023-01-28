@@ -6,6 +6,8 @@ from urllib.parse import parse_qs
 from datetime import datetime
 from django.utils import timezone
 from asgiref.sync import sync_to_async
+
+
 async def get_token(token_key):
     return AppToken.objects.filter(key=token_key).alast()
 
@@ -15,12 +17,11 @@ def get_headers(scope):
     headers = { key.decode(): value.decode() for key , value in scope_headers.items()}
     return headers
         
-        
     
 class TokenAuthentication(BaseMiddleware):
     def __init__(self, inner):
         super().__init__(inner)
-        
+    
     @sync_to_async
     def populate_scope(self ,scope):
         qs = parse_qs(scope['query_string'].decode())
