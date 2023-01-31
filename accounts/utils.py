@@ -6,3 +6,4 @@ def generate_key():
     key = binascii.hexlify(os.urandom(20)).decode()
     if AppToken.objects.filter(key=key).exists():
         key = generate_key()
+    return key

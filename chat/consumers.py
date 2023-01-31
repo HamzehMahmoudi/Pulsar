@@ -7,11 +7,14 @@ from chat.utils import get_from_base64
 # from account.models import User
 
 
-def costumer_authenticator(project=None, project_user=None, chat_id=None):
+async def costumer_authenticator(project=None, project_user=None, chat_id=None):
     if not project or not project_user or not chat_id:
         return False
-    return project_user.project_id == project.id and project.chats.filter(pk=chat_id, members=project_user).exists()
-
+    else:
+        project_user_condition = project_user.project_id == project.id
+        chat_condition = await project.chats.filter(pk=chat_id, members=project_user).aexists()
+        return project_user_condition and chat_condition
+   
     
 
 class ChatConsumer(AsyncJsonWebsocketConsumer):

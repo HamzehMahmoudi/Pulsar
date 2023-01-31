@@ -3,12 +3,13 @@ from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
 from chat.enums import ChatTypes
 from pulsar.models import BaseModel
+from django_cryptography.fields import encrypt
 # Create your models here.
 
 
 class Message(BaseModel):
     user = models.ForeignKey("accounts.ProjectUser", verbose_name=_("user"), on_delete=models.CASCADE, related_name="messages")
-    text = models.TextField(_("text"), null=True, blank=True)
+    text = encrypt(models.TextField(_("text"), null=True, blank=True))
     chat = models.ForeignKey("chat.Chat", verbose_name=_("chat"), on_delete=models.CASCADE, related_name="messages")
     message_file = models.FileField(_("file"), upload_to='messages/', max_length=100)
     replied_on = models.ForeignKey('chat.Message', on_delete=models.SET_NULL, related_name="replies", null=True, blank=True)
