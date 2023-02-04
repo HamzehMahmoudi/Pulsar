@@ -37,13 +37,13 @@ class Project(BaseModel):
         constraints = [
             constraints.UniqueConstraint(fields=['user', 'name'], name='unique_project'), 
         ]    
-    
-    
+
+
 class ProjectUser(BaseModel):
     project = models.ForeignKey("accounts.Project", on_delete=models.CASCADE, related_name='users')
     identifier = models.CharField(max_length=255, verbose_name=_('identifier'))
     is_online = models.BooleanField(default=False)
-    
+
     class Meta:
         constraints = [
             constraints.UniqueConstraint(fields=['project', 'identifier'], name='unique_project_user'),
@@ -56,7 +56,7 @@ class ProjectUser(BaseModel):
 
     def get_group_chats(self):
         return self.chats.filter(chat_type=ChatTypes.GROUP)
-    
+
 def get_user_pv(self, user_id):
     from chat.models import Chat
     try:
@@ -76,7 +76,7 @@ class AppToken(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     expire_on = models.DateTimeField(blank=True, null=True,)
 
-    
+
     class Meta:
         verbose_name = _("Token")
         verbose_name_plural = _("Tokens")

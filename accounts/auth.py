@@ -13,12 +13,12 @@ def get_headers(scope):
     scope_headers = scope.get('headers', [])
     headers = { key.decode(): value.decode() for key , value in scope_headers}
     return headers
-        
-    
+
+
 class TokenAuthentication(BaseMiddleware):
     def __init__(self, inner):
         super().__init__(inner)
-    
+
     @sync_to_async
     def populate_scope(self ,scope):
         qs = parse_qs(scope['query_string'].decode())

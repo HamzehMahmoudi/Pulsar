@@ -10,7 +10,7 @@ class Index(TemplateView):
     this view show the index page 
     """
     template_name = 'accounts/index.html'
-    
+
 class About(TemplateView):
     """
     this view show the index page 
@@ -27,7 +27,7 @@ def register(request):
     else:
         form = UserRegisterForm()
     return render(request, "accounts/register.html", {"form": form})
-    
+
 
 class ProjectsView(APIView):
     permission_classes = [IsAuthenticated]
@@ -42,7 +42,7 @@ class ProjectsView(APIView):
             }
             res.append(p_data)
         return Response(data=res, status=200)
-    
+
     def post(self, request):
         user = request.user
         data = request.data

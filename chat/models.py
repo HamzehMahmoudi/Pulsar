@@ -19,7 +19,7 @@ class Message(BaseModel):
         file_url = self.message_file.url if self.message_file else None
         if host is not None and file_url is not None:
             file_url = host + file_url
-            
+
         return {
             'id': self.id,
             'user': self.user.identifier,
@@ -36,8 +36,8 @@ class Chat(BaseModel):
     project =  models.ForeignKey("accounts.Project", verbose_name=_("project"), on_delete=models.CASCADE, related_name="chats")
     name = models.CharField(max_length=256 ,null=True, blank=True, default=None)
     key = models.CharField(max_length=21, null=True, blank=True, default=generate_chat_key)
-    
-    
+
+
     def messages_to_json(self, num=10, host=None):
         res = []
         for msg in self.messages.all()[:num].iterator():
