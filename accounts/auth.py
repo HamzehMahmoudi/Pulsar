@@ -39,4 +39,3 @@ class TokenAuthentication(BaseMiddleware):
     async def __call__(self, scope, receive, send):
         scope = await self.populate_scope(scope)
         return await super().__call__(scope, receive, send)           
- 
