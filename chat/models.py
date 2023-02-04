@@ -35,7 +35,7 @@ class Chat(BaseModel):
     chat_type = models.CharField(_("chat type"), max_length=20, choices=ChatTypes.choices, default=ChatTypes.PV)
     project =  models.ForeignKey("accounts.Project", verbose_name=_("project"), on_delete=models.CASCADE, related_name="chats")
     name = models.CharField(max_length=256 ,null=True, blank=True, default=None)
-    key = models.CharField(max_length=21, null=True, blank=True, default=generate_chat_key)
+    key = models.CharField(max_length=32, null=True, blank=True, default=generate_chat_key)
 
 
     def messages_to_json(self, num=10, host=None):

@@ -2,7 +2,7 @@ import json
 from asgiref.sync import async_to_sync, sync_to_async
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from chat.models import Chat, Message
-from chat.utils import get_from_base64
+from chat.utils import get_from_base64, encrypt_message, decrypt_message
 # from chat.models import Message
 # from account.models import User
 
@@ -48,7 +48,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                 async_to_sync(self.project_user.save)
                 self.chat = await Chat.objects.aget(pk=self.chat_id)
                 await self.accept()
-                await self.send_message({'key': self.chat.key})
+                await self.send_message({'key': self.chat.key},enc=False)
             else:
                 await self.disconnect(error_msg='authentication required')
         except Exception as e:
@@ -68,7 +68,10 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
 
     async def receive(self, text_data, **kwargs):
         try:
-            data = json.loads(text_data)
+            key = self.chat.key.encode()
+            decrypted_message = await sync_to_async(decrypt_message)(text_data, key=key)
+            encrypted_message = await sync_to_async(encrypt_message)(decrypted_message, key=key)
+            data = json.loads(encrypted_message)
             send_method = self.commands.get(data.get('command'))
             await send_method(self, data)
         except Exception as e:
@@ -83,8 +86,16 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         # BroadCast that message
         await self.send_message(content)
 
-    async def send_message(self, message):
-        await self.send(text_data=json.dumps(message))
+    async def send_message(self, message, enc=True):
+        json_data = json.dumps(message)
+        try:
+            if enc:
+                encrypted_data = await sync_to_async(encrypt_message)(message=json_data.encode(), key=self.chat.key.encode())
+            else:
+                encrypted_data = json_data
+            await self.send(text_data=encrypted_data)
+        except Exception as e:
+            print(e)
 
     async def new_message(self, data):
         # gets the new message creates a model from it and sends it to bradcast
@@ -104,7 +115,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             'command': 'new_message',
             'message': message.message_tojson(host=host)
         }
-        return await self.send_chat_message(content)
+        return await self.send_message(content)
 
     async def send_chat_message(self, message):
         data = {
@@ -125,7 +136,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             'message': event["is_typing"]
         }
         print(content['message'], type(content['message']))
-        await self.send_chat_message(content)
+        await self.send_message(content)
     # Identify the socket request and open respected proccess
     commands = {
         'fetch_messages': fetch_messages,
