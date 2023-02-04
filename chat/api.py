@@ -4,11 +4,11 @@ from rest_framework.generics import ListAPIView
 from rest_framework.permissions import IsAuthenticated
 from chat.models import Chat
 from chat.serializers import ChatSerializer
-    
+
 class ChatsAPI(ListAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = ChatSerializer
-    
+
     def get_queryset(self):
         request = self.request
         user = request.user

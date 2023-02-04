@@ -13,11 +13,11 @@ async def costumer_authenticator(project=None, project_user=None, chat_id=None):
     project_user_condition = project_user.project_id == project.id
     chat_condition = await project.chats.filter(pk=chat_id, members=project_user).aexists()
     return project_user_condition and chat_condition
-   
-    
+
+
 
 class ChatConsumer(AsyncJsonWebsocketConsumer):
-        
+
     async def get_host(self):
         scope = self.scope
         from accounts.auth import get_headers
@@ -33,7 +33,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         if host is not None and protocol is not None:
             return f"{protocol}://{host}" 
         return None
-        
+
     async def connect(self):
         try:
             self.chat_id = self.scope['url_route']['kwargs']['id']
