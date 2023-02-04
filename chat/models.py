@@ -4,6 +4,7 @@ from django.utils import timezone
 from chat.enums import ChatTypes
 from pulsar.models import BaseModel
 from django_cryptography.fields import encrypt
+from chat.utils import generate_chat_key
 # Create your models here.
 
 
@@ -34,16 +35,12 @@ class Chat(BaseModel):
     chat_type = models.CharField(_("chat type"), max_length=20, choices=ChatTypes.choices, default=ChatTypes.PV)
     project =  models.ForeignKey("accounts.Project", verbose_name=_("project"), on_delete=models.CASCADE, related_name="chats")
     name = models.CharField(max_length=256 ,null=True, blank=True, default=None)
-
+    key = models.CharField(max_length=21, null=True, blank=True, default=generate_chat_key)
+    
+    
     def messages_to_json(self, num=10, host=None):
         res = []
         for msg in self.messages.all()[:num].iterator():
-            file_url = self.message_file.url if self.message_file else None
-            if file_url is not None:
-                try:
-                    file_url = host + file_url
-                except:
-                    continue
             j = msg.message_tojson(host=host)
             res.append(j)
         return res

@@ -1,6 +1,6 @@
 import json
 from asgiref.sync import async_to_sync, sync_to_async
-from channels.generic.websocket import WebsocketConsumer, AsyncJsonWebsocketConsumer
+from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from chat.models import Chat, Message
 from chat.utils import get_from_base64
 # from chat.models import Message
@@ -10,10 +10,9 @@ from chat.utils import get_from_base64
 async def costumer_authenticator(project=None, project_user=None, chat_id=None):
     if not project or not project_user or not chat_id:
         return False
-    else:
-        project_user_condition = project_user.project_id == project.id
-        chat_condition = await project.chats.filter(pk=chat_id, members=project_user).aexists()
-        return project_user_condition and chat_condition
+    project_user_condition = project_user.project_id == project.id
+    chat_condition = await project.chats.filter(pk=chat_id, members=project_user).aexists()
+    return project_user_condition and chat_condition
    
     
 
@@ -33,8 +32,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         host = headers.get('host', None)
         if host is not None and protocol is not None:
             return f"{protocol}://{host}" 
-        else:
-            return None
+        return None
         
     async def connect(self):
         try:
@@ -50,20 +48,21 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                 async_to_sync(self.project_user.save)
                 self.chat = await Chat.objects.aget(pk=self.chat_id)
                 await self.accept()
+                await self.send_message({'key': self.chat.key})
             else:
-                await self.disconnect()
+                await self.disconnect(error_msg='authentication required')
         except Exception as e:
-            self.send_message({'error': str(e)})
-            await self.disconnect()
+            await self.disconnect(error_msg=str(e))
 
-    async def disconnect(self, close_code=1):
+    async def disconnect(self, error_msg=None):
         # Leave room group
         print('disconnected')
         if self.project_user is not None:
             if self.project_user.is_online:  
                 self.project_user.is_online = False
                 async_to_sync(self.project_user.save)
-
+        # if error_msg is not None:
+            # await self.send_json({'error': error_msg}, close=True)
         await self.channel_layer.group_discard(self.group_name, self.channel_name)
     # Receive message from WebSocket
 

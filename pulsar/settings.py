@@ -95,6 +95,9 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
+        'Options': {
+            'collation': 'utf8mb4_unicode_ci',
+        }
     }
 }
 CHANNEL_LAYERS = {
@@ -234,7 +237,7 @@ STATICFILES_DIRS = (
         os.path.join(BASE_DIR, 'static'),
 )
 # STATICFILES_DIRs = [ 
-MEDIA_ROOT = os.path.join(BASE_DIR, "/media/")
+MEDIA_ROOT = BASE_DIR / 'media/'
 MEDIA_URL = "/media/"
 
 

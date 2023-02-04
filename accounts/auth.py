@@ -3,8 +3,6 @@ from accounts.models import AppToken
 from rest_framework.exceptions import AuthenticationFailed
 from django.contrib.auth.models import AnonymousUser
 from urllib.parse import parse_qs
-from datetime import datetime
-from django.utils import timezone
 from asgiref.sync import sync_to_async
 
 
@@ -12,9 +10,8 @@ async def get_token(token_key):
     return AppToken.objects.filter(key=token_key).alast()
 
 def get_headers(scope):
-    scope_headers = dict(scope['headers'])
-    headers = dict()
-    headers = { key.decode(): value.decode() for key , value in scope_headers.items()}
+    scope_headers = scope.get('headers', [])
+    headers = { key.decode(): value.decode() for key , value in scope_headers}
     return headers
         
     

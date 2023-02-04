@@ -1,22 +1,17 @@
 from django import forms
-from django.contrib.auth import get_user_model
 from django.contrib.auth import (
-    authenticate,
     get_user_model,
     password_validation,
 )
 from django.core.validators import validate_email, ValidationError
 from accounts.validators import  validate_username
-from django.utils.translation import gettext, gettext_lazy as _
-from datetime import datetime
+from django.utils.translation import gettext_lazy as _
 
 User = get_user_model()
 
 
 
 class UserRegisterForm(forms.ModelForm):
-    """Prams"""
-
     # List of error messages
     error_messages = {
         "password_mismatch": _("The two password fields didn’t match."),

@@ -2,7 +2,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 # from authentication.auth import CustomerAuthentication
 from accounts.forms import  UserRegisterForm
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import  IsAuthenticated
 from django.views.generic import TemplateView
 from django.shortcuts import redirect, render
 class Index(TemplateView):
@@ -16,9 +16,6 @@ class About(TemplateView):
     this view show the index page 
     """
     template_name = 'accounts/about.html'
-
-# class Dashboard(View):
-#     ...
 
 
 def register(request):
@@ -53,9 +50,5 @@ class ProjectsView(APIView):
         if name is not None:
             project = user.projects.create(name=name)
             return Response(data={"id": project.id}, status=201)
-        else:
-            return Response(data={"error": "name is required"}, status=400)
-    
-
-        
-        
+        return Response(data={"error": "name is required"}, status=400)
+   
