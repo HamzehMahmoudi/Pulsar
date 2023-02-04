@@ -66,7 +66,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         await self.channel_layer.group_discard(self.group_name, self.channel_name)
     # Receive message from WebSocket
 
-    async def receive(self, text_data):
+    async def receive(self, text_data, **kwargs):
         try:
             data = json.loads(text_data)
             send_method = self.commands.get(data.get('command'))

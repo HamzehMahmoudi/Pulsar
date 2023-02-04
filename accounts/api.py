@@ -51,4 +51,3 @@ class ProjectsView(APIView):
             project = user.projects.create(name=name)
             return Response(data={"id": project.id}, status=201)
         return Response(data={"error": "name is required"}, status=400)
-   
