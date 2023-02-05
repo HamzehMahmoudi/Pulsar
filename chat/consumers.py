@@ -66,11 +66,14 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         await self.channel_layer.group_discard(self.group_name, self.channel_name)
     # Receive message from WebSocket
 
-    async def receive(self, text_data, **kwargs):
+    async def receive(self, text_data, enc=False, **kwargs):
         try:
-            key = self.chat.key.encode()
-            decrypted_message = await sync_to_async(decrypt_message)(text_data, key=key)
-            encrypted_message = await sync_to_async(encrypt_message)(decrypted_message, key=key)
+            if enc:
+                key = self.chat.key.encode()
+                decrypted_message = await sync_to_async(decrypt_message)(text_data, key=key)
+                encrypted_message = await sync_to_async(encrypt_message)(decrypted_message, key=key)
+            else:
+                encrypted_message = text_data
             data = json.loads(encrypted_message)
             send_method = self.commands.get(data.get('command'))
             await send_method(self, data)
@@ -86,7 +89,10 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         # BroadCast that message
         await self.send_message(content)
 
-    async def send_message(self, message, enc=True):
+    async def send_message(self, message, enc=False):
+        """
+        encrypt data aes256 and hexlify it then send to client
+        """
         json_data = json.dumps(message)
         try:
             if enc:
