@@ -10,14 +10,16 @@ class ChatsAPI(ListAPIView):
     serializer_class = ChatSerializer
 
     def get_queryset(self):
+        from accounts.models import AppToken
         request = self.request
         user = request.user
-        project_id = request.GET.get('project')
+        token = request.GET.get('token')
+        token = AppToken.objects.filter(key=token).first()
+        if token is None:
+            return Chat.objects.none()  
         user_id = request.GET.get('user')
-        project = user.projects.filter(pk=project_id).first()
+        project = user.projects.filter(pk=token.project_id).first()
         if project is None:
             return Chat.objects.none()
-        project_user = project.users.filter(identifier=user_id).first()
-        if project_user is None:
-            return Chat.objects.none()
+        project_user, created = project.users.get_or_create(identifier=user_id)
         return project_user.chats.all()
