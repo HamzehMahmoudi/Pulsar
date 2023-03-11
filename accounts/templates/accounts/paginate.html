@@ -1,0 +1,15 @@
+{% if page_obj.has_previous %}
+    <a  href="{{ request.path }}?page={{ page_obj.previous_page_number }}"><i class="fa fa-arrow-left"></i></a>
+{% else %}
+    <a class="btn btn-sm" href="{{ request.path }}?page=1">First Page</a>
+{% endif %}
+
+{% for n in paginator.page_range %}
+    <a class="btn btn-sm" href="{{ request.path }}?page={{ n.number }}">{{ n.number }}</a>
+{% endfor %}
+
+{% if page_obj.has_next %}
+    <a  href="{{ request.path }}?page={{ page_obj.next_page_number }}"><i class="fa fa-arrow-right"></i></a>
+{% else %}
+    <a class="btn btm-sm" href="{{ request.path }}?page={{ page_obj.num_pages }}">Last page</a>
+{% endif %}

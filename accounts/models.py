@@ -20,6 +20,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_staff = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     is_superuser = models.BooleanField(default=False)
+    phone = models.CharField(_('phone'), max_length=15, default='', blank=True)
     created = models.DateTimeField(default=timezone.now)
 
     USERNAME_FIELD = 'email'
@@ -38,6 +39,8 @@ class Project(BaseModel):
             constraints.UniqueConstraint(fields=['user', 'name'], name='unique_project'), 
         ]    
 
+    def has_valid_token(self):
+        return self.apptoken_set.filter(expire_on__gt=timezone.now()).exists()
 
 class ProjectUser(BaseModel):
     project = models.ForeignKey("accounts.Project", on_delete=models.CASCADE, related_name='users')

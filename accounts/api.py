@@ -10,28 +10,6 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from accounts.serializers import UserRegisterSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
-class Index(TemplateView):
-    """
-    this view show the index page 
-    """
-    template_name = 'accounts/index.html'
-
-class About(TemplateView):
-    """
-    this view show the index page 
-    """
-    template_name = 'accounts/about.html'
-
-
-def register(request):
-    if request.method == "POST":
-        form = UserRegisterForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect("login")
-    else:
-        form = UserRegisterForm()
-    return render(request, "accounts/register.html", {"form": form})
 
 class CreateUserAPI(APIView):
     def post(self, request):

@@ -6,11 +6,13 @@ from django.contrib.auth import (
 from django.core.validators import validate_email, ValidationError
 from accounts.validators import  validate_username
 from django.utils.translation import gettext_lazy as _
-
+from accounts.models import Project
 User = get_user_model()
 
-
-
+class ProjectForm(forms.ModelForm):
+    class Meta:
+        model = Project
+        fields = ("name", )
 class UserRegisterForm(forms.ModelForm):
     # List of error messages
     error_messages = {

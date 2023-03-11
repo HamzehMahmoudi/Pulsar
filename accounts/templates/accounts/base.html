@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="{% static '/css/bootstrap.css'%} ">
     <link rel="stylesheet" href="{% static '/css/all.css'%} ">
     <title>{% block title %}{% endblock %}</title>
+    {% block head %}{% endblock %}
   </head>
   
   <body class="d-flex flex-column h-100">
@@ -24,12 +25,9 @@
           <li class="nav-item">
             <a class="nav-link" href="{% url 'about' %}"> {% trans "About" %}</a>
           </li>
-          {% comment %} <li class="nav-item">
-            <a class="nav-link" href="{% url 'quotelist' %}"> {% trans "Qoute list" %}</a> {% endcomment %}
-          {% comment %} </li>
           <li class="nav-item">
-            <a class="nav-link" href="{% url 'product-list' %}"> {% trans "Product list" %}</a>
-          </li>         {% endcomment %}
+            <a class="nav-link" href="{% url 'projects' %}"> {% trans "Project" %}</a>
+          </li>
         </ul>
         <ul class="navbar-nav my-2 mr-5 my-lg-0">
           {% if user.is_authenticated %}

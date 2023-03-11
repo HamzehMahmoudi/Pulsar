@@ -1,0 +1,13 @@
+{% extends "accounts/base.html" %}
+{%load i18n%}
+{% block title %}{% trans "Edit Project" %}{% endblock %}
+{% block body %}
+{% load crispy_forms_tags %}
+<form method="post" style="padding-top:50px; width:400px;height:70%" class='container-sm'>
+    <h1 class='display-4' style='text-align:center'> {% trans "Edit Project" %} </h1>
+    {% csrf_token %}
+    {{ form|crispy}}
+    <button type="submit" class='btn btn-primary'>{% trans "Confirm" %}</button>
+</form>
+
+{% endblock %}

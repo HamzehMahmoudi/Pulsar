@@ -23,18 +23,20 @@ from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
 )
-from accounts.api import Index, About
-
+from accounts.views import Index, About
+from azbankgateways.urls import az_bank_gateways_urls
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', Index.as_view(), name='index'),
     path('about', About.as_view(), name='about'),
     path('accounts/', include('accounts.urls')),
+    path('payment/', include('payment.urls')),
     path('chat/', include('chat.urls')),
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path("favicon.ico",RedirectView.as_view(url=staticfiles_storage.url("favicon.ico")),),
+    path('bankgateways/', az_bank_gateways_urls()),
 ]
 # urlpatterns += static(settings.STATIC_URL, document_root=settings.STAT)
 

@@ -48,11 +48,12 @@ INSTALLED_APPS = [
     'channels',
     'corsheaders',
     'crispy_forms',
-    # 'azbankgateways',
+    'azbankgateways',
 
     # apps
     'chat',
     'accounts',
+    'payment'
 ]
 
 MIDDLEWARE = [
@@ -92,8 +93,11 @@ ASGI_APPLICATION = 'pulsar.asgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        "NAME": os.getenv('POSTGRES_DB'),
+        "USER": os.getenv('POSTGRES_USER'),
+        "PASSWORD": os.getenv('POSTGRES_PASSWORD'),
+        "HOST": os.getenv('DB_HOST'),
         'Options': {
             'collation': 'utf8mb4_unicode_ci',
         }
@@ -167,54 +171,54 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-# AZ_IRANIAN_BANK_GATEWAYS = {
-#    'GATEWAYS': {
-#        'BMI': {
-#            'MERCHANT_CODE': '<YOUR MERCHANT CODE>',
-#            'TERMINAL_CODE': '<YOUR TERMINAL CODE>',
-#            'SECRET_KEY': '<YOUR SECRET CODE>',
-#        },
-#        'SEP': {
-#            'MERCHANT_CODE': '<YOUR MERCHANT CODE>',
-#            'TERMINAL_CODE': '<YOUR TERMINAL CODE>',
-#        },
-#        'ZARINPAL': {
-#            'MERCHANT_CODE': '<YOUR MERCHANT CODE>',
-#            'SANDBOX': 0,  # 0 disable, 1 active
-#        },
-#        'IDPAY': {
-#            'MERCHANT_CODE': '<YOUR MERCHANT CODE>',
-#            'METHOD': 'POST',
-#            'X_SANDBOX': 0, 
-#        },
-#        'ZIBAL': {
-#            'MERCHANT_CODE': '<YOUR MERCHANT CODE>',
-#        },
-#        'BAHAMTA': {
-#            'MERCHANT_CODE': '<YOUR MERCHANT CODE>',
-#        },
-#        'MELLAT': {
-#            'TERMINAL_CODE': '<YOUR TERMINAL CODE>',
-#            'USERNAME': '<YOUR USERNAME>',
-#            'PASSWORD': '<YOUR PASSWORD>',
-#        },
-#        'PAYV1': {
-#            'MERCHANT_CODE': '<YOUR MERCHANT CODE>',
-#            'X_SANDBOX': 0,
-#        },
-#    },
-#    'IS_SAMPLE_FORM_ENABLE': True,
-#    'DEFAULT': 'IDPAY',
-#    'CURRENCY': 'IRT',
-#    'TRACKING_CODE_QUERY_PARAM': 'tc', 
-#    'TRACKING_CODE_LENGTH': 16, 
-#    'SETTING_VALUE_READER_CLASS': 'azbankgateways.readers.DefaultReader', 
-#    'BANK_PRIORITIES': [
-#        'IDPAY',
-#        'BMI',
-#        'SEP',
-#    ],
-# }
+AZ_IRANIAN_BANK_GATEWAYS = {
+   'GATEWAYS': {
+       'BMI': {
+           'MERCHANT_CODE': '<YOUR MERCHANT CODE>',
+           'TERMINAL_CODE': '<YOUR TERMINAL CODE>',
+           'SECRET_KEY': '<YOUR SECRET CODE>',
+       },
+       'SEP': {
+           'MERCHANT_CODE': '<YOUR MERCHANT CODE>',
+           'TERMINAL_CODE': '<YOUR TERMINAL CODE>',
+       },
+       'ZARINPAL': {
+           'MERCHANT_CODE': '<YOUR MERCHANT CODE>',
+           'SANDBOX': 0,  # 0 disable, 1 active
+       },
+       'IDPAY': {
+           'MERCHANT_CODE': '779cfe4c-d13a-4b1e-a107-2d72af39e20c',
+           'METHOD': 'POST',
+           'X_SANDBOX': 1, 
+       },
+       'ZIBAL': {
+           'MERCHANT_CODE': '<YOUR MERCHANT CODE>',
+       },
+       'BAHAMTA': {
+           'MERCHANT_CODE': '<YOUR MERCHANT CODE>',
+       },
+       'MELLAT': {
+           'TERMINAL_CODE': '<YOUR TERMINAL CODE>',
+           'USERNAME': '<YOUR USERNAME>',
+           'PASSWORD': '<YOUR PASSWORD>',
+       },
+       'PAYV1': {
+           'MERCHANT_CODE': '<YOUR MERCHANT CODE>',
+           'X_SANDBOX': 0,
+       },
+   },
+   'IS_SAMPLE_FORM_ENABLE': True,
+   'DEFAULT': 'IDPAY',
+   'CURRENCY': 'IRT',
+   'TRACKING_CODE_QUERY_PARAM': 'tc', 
+   'TRACKING_CODE_LENGTH': 16, 
+   'SETTING_VALUE_READER_CLASS': 'azbankgateways.readers.DefaultReader', 
+   'BANK_PRIORITIES': [
+       'IDPAY',
+       'BMI',
+       'SEP',
+   ],
+}
 
 # Internationalization
 # https://docs.djangoproject.com/en/4.1/topics/i18n/

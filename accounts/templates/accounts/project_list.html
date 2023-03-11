@@ -1,0 +1,46 @@
+{% extends 'accounts/base.html' %}
+{% load i18n %}
+{% block title %}{% trans "Project list" %}{% endblock title %}
+{% block body %}
+    <table style="font-family:'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif" class="table table-bordered table-striped {% if bidi == rtl %}rtl{% endif %}">
+        <h1 class="text-success rtl ">
+        </h1>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>{% trans "name" %}</th>
+                <th>{% trans "has token" %}</th>
+                <th>{% trans "options" %}</th>
+            </tr>
+        </thead>
+        {% for proj in page_obj %}
+        <tr>
+            <td>{{ forloop.counter }}</td>
+            <td>{{ proj.name}}</td>
+            <td>
+                {% if proj.has_valid_token %}
+                    <i class="fa fa-check" aria-hidden="true" style="color:green"></i>
+                {% else %}
+                    <i class="fa fa-times" aria-hidden="true" style="color:red"></i>
+                {% endif %}
+            </td>
+            <td  class="d-flex justify-content-around">
+                {% if proj.has_valid_token %}
+                <a  href="{% url "project_detail" proj.pk %}" data-toggle="tooltip" data-placement="top" title="View"> <i class="fa fa-eye" aria-hidden="true"></i></a>
+                {% else %}
+                <form action="{% url 'callback-gateway' %}" method='POST'>
+                    {% csrf_token %}
+                    <input type="hidden" name="project_id" value={{proj.pk}}>
+                    <button type="submit" class="btn bg-transparent">
+                        <i type='submit' class="fa fa-credit-card" aria-hidden="true" style="color:blue"></i>
+                    </button>                    
+                </form>
+                {% endif %}
+
+            </td>
+    </tr>
+        {% endfor %}
+    </table>
+    <a href="{% url 'create_project' %}" class="btn btn-primary"><i class="fas fa-plus"></i> <strong>{% trans "Project" %}</strong></a>
+    {% include 'accounts/paginate.html' %}
+{% endblock body %}

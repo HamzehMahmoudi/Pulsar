@@ -1,0 +1,52 @@
+{% extends 'accounts/base.html' %}
+{% load i18n %}
+{% load crispy_forms_tags %}
+{% block title %}{{object.name}}{% endblock title %}
+{% block body %}
+<div class="card" style="width:100% ;">
+  <div class="card-body">
+    <h1 class="card-title ">{% trans "Project" %} : {{object.name}}</h1>
+        <div class="row flex">
+            <div class="col input-group mb-5">
+                <h3>token: </h3>
+                <input type="text" class="form-control" lable='token' name='token' id="token" value="{{object.apptoken_set.last.key}}">
+                <button class="btn btn-outline-secondary" type="button" onclick="copyText()"><i class="fa fa-clipboard" aria-hidden="true"></i>
+                </button>                
+            </div>     
+        </div>
+        <h5><i class="fa fa-hourglass-half" aria-hidden="true" style="color:red"></i>
+             {{object.apptoken_set.last.expire_on}}</h5>
+
+    <hr>
+    <br>
+    <h1 class="card-title ">{% trans "statistics" %}</h1>
+
+    <hr>
+    <hr>
+    <a href="" class="btn btn-secondary" onclick="get_project_token()">{% trans "get token" %}</a>
+    <a href="{% url 'project_edit' object.id %}" class="btn btn-primary">{% trans "Edit" %}</a>
+    
+    <div class ="text-right">
+    </div>
+ </div>
+</div> 
+
+{% block script %}
+<script>
+    function get_project_token() {
+        fetch("{% url 'get_token' object.id %}", {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'AUTHORIZATION': "{{token}}",
+            }
+        }).then((response) => alert(response))
+    }
+    function copyText() {
+        var copyText = document.getElementById("token");
+        copyText.select();
+        document.execCommand("copy");
+        }
+</script>
+{% endblock %}
+{% endblock body %}
