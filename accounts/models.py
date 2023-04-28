@@ -41,6 +41,9 @@ class Project(BaseModel):
 
     def has_valid_token(self):
         return self.apptoken_set.filter(expire_on__gt=timezone.now()).exists()
+ 
+    def __str__(self) -> str:
+        return f"{self.user}-{self.name}"
 
 class ProjectUser(BaseModel):
     project = models.ForeignKey("accounts.Project", on_delete=models.CASCADE, related_name='users')
@@ -90,4 +93,4 @@ class AppToken(models.Model):
 
 
     def __str__(self):
-        return self.name
+        return f"{self.project}-{self.name}"

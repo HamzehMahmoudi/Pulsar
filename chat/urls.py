@@ -3,5 +3,6 @@ from chat import api
 
 
 urlpatterns = [
-    path('', api.ChatsAPI.as_view()),    
+    path('', api.ChatsAPI.as_view()),
+    path('pv', api.GetPvAPI.as_view()),   
 ]

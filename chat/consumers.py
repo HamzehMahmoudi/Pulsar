@@ -3,9 +3,11 @@ from asgiref.sync import async_to_sync, sync_to_async
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from chat.models import Chat, Message
 from chat.utils import get_from_base64, encrypt_message, decrypt_message
+from django.conf import settings
 # from chat.models import Message
 # from account.models import User
 
+enc = settings.ENCRYPTION
 
 async def costumer_authenticator(project=None, project_user=None, chat_id=None):
     if not project or not project_user or not chat_id:
@@ -45,10 +47,10 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                 await self.channel_layer.group_add(self.group_name, self.channel_name)
                 print("connected")
                 self.project_user.is_online = True
-                async_to_sync(self.project_user.save)
+                sync_to_async(self.project_user.save)()
                 self.chat = await Chat.objects.aget(pk=self.chat_id)
                 await self.accept()
-                await self.send_message({'key': self.chat.key},enc=False)
+                # await self.send_message({'key': self.chat.key},enc=False) # add system to exchange keies
             else:
                 await self.disconnect(error_msg='authentication required')
         except Exception as e:
@@ -60,21 +62,21 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         if self.project_user is not None:
             if self.project_user.is_online:  
                 self.project_user.is_online = False
-                async_to_sync(self.project_user.save)
+                sync_to_async(self.project_user.save)()
         # if error_msg is not None:
             # await self.send_json({'error': error_msg}, close=True)
         await self.channel_layer.group_discard(self.group_name, self.channel_name)
     # Receive message from WebSocket
 
-    async def receive(self, text_data, enc=False, **kwargs):
+    async def receive(self, text_data, enc=enc, **kwargs):
         try:
             if enc:
-                key = self.chat.key.encode()
+                key = self.chat.key 
                 decrypted_message = await sync_to_async(decrypt_message)(text_data, key=key)
-                encrypted_message = await sync_to_async(encrypt_message)(decrypted_message, key=key)
+
             else:
-                encrypted_message = text_data
-            data = json.loads(encrypted_message)
+                decrypted_message = text_data
+            data = json.loads(decrypted_message)
             send_method = self.commands.get(data.get('command'))
             await send_method(self, data)
         except Exception as e:
@@ -89,14 +91,14 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         # BroadCast that message
         await self.send_message(content)
 
-    async def send_message(self, message, enc=False):
+    async def send_message(self, message, enc=enc):
         """
-        encrypt data aes256 and hexlify it then send to client
+        encrypt data 
         """
         json_data = json.dumps(message)
         try:
             if enc:
-                encrypted_data = await sync_to_async(encrypt_message)(message=json_data.encode(), key=self.chat.key.encode())
+                encrypted_data = await sync_to_async(encrypt_message)(message=json_data, key=self.chat.key)
             else:
                 encrypted_data = json_data
             await self.send(text_data=encrypted_data)
@@ -115,11 +117,11 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             text=data.get('message'),
             message_file = message_file,
             chat_id=self.chat_id,
-            replied_on=data.get('replied_on'))
+            replied_on_id=data.get('replied_on'))
         host = await self.get_host()
         content = {
             'command': 'new_message',
-            'message': message.message_tojson(host=host)
+            'message': await sync_to_async(message.message_tojson)(host=host)
         }
         return await self.send_message(content)
 
@@ -144,8 +146,51 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         print(content['message'], type(content['message']))
         await self.send_message(content)
     # Identify the socket request and open respected proccess
+    async def edit_message(self, data):
+        # gets the new message creates a model from it and sends it to bradcast
+        message_id=data.get('message_id')
+        message = await Message.objects.filter(chat=self.chat, pk=message_id, user=self.project_user).alast()
+        if message is not None:            
+            message.text=data.get('message')
+            await sync_to_async(message.save)()
+            host = await self.get_host()
+            content = {
+                'command': 'edit_message',
+                'edited_id': message_id ,
+                'message': await sync_to_async(message.message_tojson)(host=host),
+                'status': 200,
+            }
+        else:
+            content = {
+                'command': 'edit_message',
+                'edited_id': message_id ,
+                'message': None,
+                'status': 400,
+            }           
+        return await self.send_message(content)
+    
+    async def delete_message(self, data):
+        # gets the new message creates a model from it and sends it to bradcast
+        message_id=data.get('message_id')
+        message = await Message.objects.filter(chat=self.chat, pk=message_id, user=self.project_user).alast()
+        if message is not None:
+            await sync_to_async(message.delete)()        
+            content = {
+                'command': 'delete_message',
+                'deleted_id': message_id ,
+                'status': 200,
+            }
+        else:
+            content = {
+                'command': 'delete_message',
+                'deleted_id': message_id ,
+                'status': 400,
+            }           
+        return await self.send_message(content)
     commands = {
         'fetch_messages': fetch_messages,
         'new_message': new_message,
+        'edit_message': edit_message,
+        'delete_message': delete_message,
         'is_typing': is_typing,
     }

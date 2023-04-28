@@ -29,7 +29,6 @@ class Index(TemplateView):
             self.request.session['access_token'] = 'Bearer'+'  '+str(token.access_token)
             self.request.session['refresh_token'] = str(token)
             self.request.session.modified = True
-        print(self.request.COOKIES)
         return super().get(request, *args, **kwargs)
 class About(TemplateView):
     """
