@@ -47,8 +47,9 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                 await self.channel_layer.group_add(self.group_name, self.channel_name)
                 print("connected")
                 self.project_user.is_online = True
-                sync_to_async(self.project_user.save)()
                 self.chat = await Chat.objects.aget(pk=self.chat_id)
+                self.key = self.chat.key
+                sync_to_async(self.project_user.save)()
                 await self.accept()
                 # await self.send_message({'key': self.chat.key},enc=False) # add system to exchange keies
             else:
@@ -69,19 +70,24 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
     # Receive message from WebSocket
 
     async def receive(self, text_data, enc=enc, **kwargs):
-        try:
-            if enc:
-                key = self.chat.key 
-                decrypted_message = await sync_to_async(decrypt_message)(text_data, key=key)
-
-            else:
-                decrypted_message = text_data
-            data = json.loads(decrypted_message)
-            send_method = self.commands.get(data.get('command'))
-            await send_method(self, data)
-        except Exception as e:
-            await self.send_message({'error': str(e)})
-
+            try:
+                if enc:
+                    decrypted_message = await sync_to_async(decrypt_message)(text_data, password=self.key)
+                else:
+                    decrypted_message = text_data
+                data = json.loads(decrypted_message)
+                cmd = data['command']
+                if cmd == 'fetch_messages':
+                    await self.fetch_messages(data)
+                else:
+                    data= {
+                        "type": data['command'],
+                        'msg': text_data
+                    }
+                    await self.channel_layer.group_send(self.group_name, data)
+            except Exception as e:
+                await self.send_message({'error': str(e)})
+                
     async def fetch_messages(self, data):
         host = await self.get_host()
         content = {
@@ -107,6 +113,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
 
     async def new_message(self, data):
         # gets the new message creates a model from it and sends it to bradcast
+        data = json.loads(data.get("msg", {}))
         file_data=data.get('message_file')
         file_name=data.get('filename')
         message_file =None
@@ -125,29 +132,20 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         }
         return await self.send_message(content)
 
-    async def send_chat_message(self, message):
-        data = {
-            'type': 'chat_message',
-            'message': message
-        }
-        await self.channel_layer.group_send(self.group_name, data)
-    # Receive message from room group
 
-    async def chat_message(self, event):
-        message = event['message']
-        await self.send(text_data=json.dumps(message))
-
-    async def is_typing(self, event):
+    async def is_typing(self, data):
+        data = json.loads(data.get("msg", {}))
         content = {
             'command': 'is_typing',
             'user_id': self.project_user.id,
-            'message': event["is_typing"]
+            'message': data["is_typing"]
         }
         print(content['message'], type(content['message']))
         await self.send_message(content)
     # Identify the socket request and open respected proccess
     async def edit_message(self, data):
-        # gets the new message creates a model from it and sends it to bradcast
+        # gets the new message edit a model from it and sends it to bradcast
+        data = json.loads(data.get("msg", {}))
         message_id=data.get('message_id')
         message = await Message.objects.filter(chat=self.chat, pk=message_id, user=self.project_user).alast()
         if message is not None:            
@@ -170,7 +168,8 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         return await self.send_message(content)
     
     async def delete_message(self, data):
-        # gets the new message creates a model from it and sends it to bradcast
+        # gets the new message delete a model from it and sends it to bradcast
+        data = json.loads(data.get("msg", {}))
         message_id=data.get('message_id')
         message = await Message.objects.filter(chat=self.chat, pk=message_id, user=self.project_user).alast()
         if message is not None:
@@ -187,10 +186,11 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                 'status': 400,
             }           
         return await self.send_message(content)
-    commands = {
-        'fetch_messages': fetch_messages,
-        'new_message': new_message,
-        'edit_message': edit_message,
-        'delete_message': delete_message,
-        'is_typing': is_typing,
-    }
+    
+    # commands = {
+    #     'fetch_messages': fetch_messages,
+    #     'new_message': new_message,
+    #     'edit_message': edit_message,
+    #     'delete_message': delete_message,
+    #     'is_typing': is_typing,
+    # }
