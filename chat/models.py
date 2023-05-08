@@ -14,6 +14,8 @@ class Message(BaseModel):
     chat = models.ForeignKey("chat.Chat", verbose_name=_("chat"), on_delete=models.CASCADE, related_name="messages")
     message_file = models.FileField(_("file"), upload_to='messages/', max_length=100)
     replied_on = models.ForeignKey('chat.Message', on_delete=models.SET_NULL, related_name="replies", null=True, blank=True)
+    views = models.ManyToManyField("accounts.ProjectUser", verbose_name=_("viewed users"), related_name="views", blank=True)
+    
 
     def message_tojson(self, host=None):
         file_url = self.message_file.url if self.message_file else None
@@ -37,6 +39,8 @@ class Chat(BaseModel):
     name = models.CharField(max_length=256 ,null=True, blank=True, default=None)
     key = models.CharField(max_length=32, null=True, blank=True, default=generate_chat_key)
 
+    def unseened_messages(self, user):
+        return self.messages.exclude(views=user).count()
 
     def messages_to_json(self, num=10, host=None):
         res = []

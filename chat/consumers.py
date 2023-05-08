@@ -4,8 +4,7 @@ from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from chat.models import Chat, Message
 from chat.utils import get_from_base64, encrypt_message, decrypt_message
 from django.conf import settings
-# from chat.models import Message
-# from account.models import User
+
 
 enc = settings.ENCRYPTION
 
@@ -67,7 +66,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         # if error_msg is not None:
             # await self.send_json({'error': error_msg}, close=True)
         await self.channel_layer.group_discard(self.group_name, self.channel_name)
-    # Receive message from WebSocket
+
 
     async def receive(self, text_data, enc=enc, **kwargs):
             try:
@@ -87,7 +86,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             'command': 'messages',
             'messages': await sync_to_async(self.chat.messages_to_json)(host=host)
         }
-        # BroadCast that message
+
         await self.send_message(content)
 
     async def send_message(self, message, enc=enc):
@@ -116,8 +115,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         await self.send_message(message)
         
     async def new_message(self, data):
-        # gets the new message creates a model from it and sends it to bradcast
-        #data = json.loads(data.get("msg", {}))
+
         file_data=data.get('message_file')
         file_name=data.get('filename')
         message_file =None
@@ -138,7 +136,6 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
 
 
     async def is_typing(self, data):
-        #data = json.loads(data.get("msg", {}))
         content = {
             'command': 'is_typing',
             'user_id': self.project_user.id,
@@ -147,10 +144,8 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         print(content['message'], type(content['message']))
         await self.send_chat_message(content)
         
-    # Identify the socket request and open respected proccess
     async def edit_message(self, data):
-        # gets the new message edit a model from it and sends it to bradcast
-        #data = json.loads(data.get("msg", {}))
+
         message_id=data.get('message_id')
         message = await Message.objects.filter(chat=self.chat, pk=message_id, user=self.project_user).alast()
         if message is not None:            
@@ -192,10 +187,30 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             }           
         await self.send_chat_message(content)
     
+    async def forward_message(self, data):
+        ...
+    
+    async def read_messages(self, data):
+        messages_ids = data.get('message_ids', [])
+        messages = self.chat.messages.filter(pk__in=messages_ids)
+        ids = []
+        async for message in messages:
+           await sync_to_async(message.views.add)(self.project_user)
+           ids.append(message.pk)
+    
+        content = {
+                'command': 'read_messages',
+                'readed_ids':  ids,
+                'status': 200,
+            } 
+        await self.send_chat_message(content)
+        
     commands = {
         'fetch_messages': fetch_messages,
         'new_message': new_message,
         'edit_message': edit_message,
         'delete_message': delete_message,
         'is_typing': is_typing,
+        'forward_message': forward_message,
+        'read_messages': read_messages
     }
