@@ -72,19 +72,12 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
     async def receive(self, text_data, enc=enc, **kwargs):
             try:
                 if enc:
-                    decrypted_message = await sync_to_async(decrypt_message)(text_data, password=self.key)
+                    decrypted_message = await sync_to_async(decrypt_message)(text_data, key=self.key)
                 else:
                     decrypted_message = text_data
                 data = json.loads(decrypted_message)
-                cmd = data['command']
-                if cmd == 'fetch_messages':
-                    await self.fetch_messages(data)
-                else:
-                    data= {
-                        "type": data['command'],
-                        'msg': text_data
-                    }
-                    await self.channel_layer.group_send(self.group_name, data)
+                send_method = self.commands.get(data.get('command'))
+                await send_method(self, data)
             except Exception as e:
                 await self.send_message({'error': str(e)})
                 
@@ -110,10 +103,21 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             await self.send(text_data=encrypted_data)
         except Exception as e:
             print(e)
+            
+    async def send_chat_message(self, message):
+        data = {
+            'type': 'chat_message',
+            'message': message
+        }
+        await self.channel_layer.group_send(self.group_name, data)
 
+    async def chat_message(self, event):
+        message = event['message']
+        await self.send_message(message)
+        
     async def new_message(self, data):
         # gets the new message creates a model from it and sends it to bradcast
-        data = json.loads(data.get("msg", {}))
+        #data = json.loads(data.get("msg", {}))
         file_data=data.get('message_file')
         file_name=data.get('filename')
         message_file =None
@@ -130,22 +134,23 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             'command': 'new_message',
             'message': await sync_to_async(message.message_tojson)(host=host)
         }
-        return await self.send_message(content)
+        await self.send_chat_message(content)
 
 
     async def is_typing(self, data):
-        data = json.loads(data.get("msg", {}))
+        #data = json.loads(data.get("msg", {}))
         content = {
             'command': 'is_typing',
             'user_id': self.project_user.id,
             'message': data["is_typing"]
         }
         print(content['message'], type(content['message']))
-        await self.send_message(content)
+        await self.send_chat_message(content)
+        
     # Identify the socket request and open respected proccess
     async def edit_message(self, data):
         # gets the new message edit a model from it and sends it to bradcast
-        data = json.loads(data.get("msg", {}))
+        #data = json.loads(data.get("msg", {}))
         message_id=data.get('message_id')
         message = await Message.objects.filter(chat=self.chat, pk=message_id, user=self.project_user).alast()
         if message is not None:            
@@ -165,11 +170,11 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                 'message': None,
                 'status': 400,
             }           
-        return await self.send_message(content)
+        await self.send_chat_message(content)
     
     async def delete_message(self, data):
         # gets the new message delete a model from it and sends it to bradcast
-        data = json.loads(data.get("msg", {}))
+        #data = json.loads(data.get("msg", {}))
         message_id=data.get('message_id')
         message = await Message.objects.filter(chat=self.chat, pk=message_id, user=self.project_user).alast()
         if message is not None:
@@ -185,12 +190,12 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                 'deleted_id': message_id ,
                 'status': 400,
             }           
-        return await self.send_message(content)
+        await self.send_chat_message(content)
     
-    # commands = {
-    #     'fetch_messages': fetch_messages,
-    #     'new_message': new_message,
-    #     'edit_message': edit_message,
-    #     'delete_message': delete_message,
-    #     'is_typing': is_typing,
-    # }
+    commands = {
+        'fetch_messages': fetch_messages,
+        'new_message': new_message,
+        'edit_message': edit_message,
+        'delete_message': delete_message,
+        'is_typing': is_typing,
+    }

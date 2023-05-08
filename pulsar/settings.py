@@ -252,4 +252,4 @@ LOGIN_REDIRECT_URL = "index"
 LOGIN_URL = "login"
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-ENCRYPTION=False
+ENCRYPTION=True
