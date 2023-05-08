@@ -9,5 +9,6 @@ more docs and readme will be here soon ...
 - [ ] implement forward message 
 - [ ] add chat list with unread messages count  
 - [ ] add voice chat and video chat
-- [ ] DELETE EVERY THING AND REWRITE IT WITH RUST
+- [ ] DELETE EVERY THING AND REWRITE IT WITH SOMTHING ELSE
+
  
